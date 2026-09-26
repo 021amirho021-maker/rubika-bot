@@ -1,0 +1,2 @@
+robobot
+google-generativeai

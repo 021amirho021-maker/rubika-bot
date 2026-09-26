@@ -1,0 +1,108 @@
+import requests
+from bs4 import BeautifulSoup
+
+TOKEN = "CEDFBH0IDICJZCMHYWAQVPABEUDKQWOEOKRZBQJCINQAYKDHSPOVGYJWHKEFPWZX"
+CHANNEL_ID = "@FilmSerialTrend"
+TARGET_SITE_URL = "https://uperavan.com/"
+
+
+def run_bot_once():
+  print("🚀 ربات شکارچی خودکار شروع به کار کرد...")
+
+  url_photo = f"https://botapi.rubika.ir/v3/{TOKEN}/sendPhoto"
+  url_video = f"https://botapi.rubika.ir/v3/{TOKEN}/sendVideo"
+
+  try:
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(TARGET_SITE_URL, headers=headers)
+
+    if response.status_code == 200:
+      soup = BeautifulSoup(response.text, "html.parser")
+      
+      latest_post = soup.find("article") or soup.find("div", class_="post")
+
+      if latest_post:
+        title_tag = latest_post.find("h2") or latest_post.find("h3")
+        title = title_tag.text.strip() if title_tag else "فیلم جدید روز"
+        
+        link_tag = latest_post.find("a")
+        link = link_tag["href"] if link_tag else TARGET_SITE_URL
+        
+        img_tag = latest_post.find("img")
+        poster_url = img_tag["src"] if img_tag else "https://via.placeholder.com/600"
+
+        is_iranian = "ایرانی" in title or "سریال ایرانی" in latest_post.text
+
+        teaser_url = "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
+        links_dict = {
+            "480": link,
+            "720": link,
+            "1080": link,
+        }
+        summary_text = "این فیلم یکی از جدیدترین و جذاب‌ترین آثار روز است که تماشای آن بسیار پیشنهاد می‌شود. اتفاقات هیجان‌انگیزی در جریان است..."
+
+        hashtag = "#ایرانی" if is_iranian else "#خارجی"
+
+        detailed_caption = f"""🎬 معرفی و بررسی فیلم: {title}
+
+📝 توضیحات و جزئیات داستان (با کمی اسپویل):
+{summary_text}
+
+{hashtag}
+📌 @FilmSerialTrend"""
+
+        # ارسال پوستر
+        try:
+          requests.post(
+              url_photo,
+              data={
+                  "chat_id": CHANNEL_ID,
+                  "caption": detailed_caption,
+                  "photo": poster_url,
+              },
+          )
+          print("✅ پوستر و توضیحات ارسال شد.")
+        except Exception as e:
+          print(f"❌ خطا در ارسال عکس: {e}")
+
+        download_caption = f"""🎬 نام فیلم: {title}
+⚡ کیفیت: عالی
+
+📥 لینک‌های دانلود مستقیم:
+🔹 کیفیت ۴۸۰p:
+🔗 [کلیک کنید برای دانلود]({links_dict.get('480', '#')})
+
+🔹 کیفیت ۷۲۰p:
+🔗 [کلیک کنید برای دانلود]({links_dict.get('720', '#')})
+
+🔹 کیفیت ۱۰۸۰p:
+🔗 [کلیک کنید برای دانلود]({links_dict.get('1080', '#')})
+
+📌 @FilmSerialTrend"""
+
+        # ارسال تیزر و لینک‌ها
+        try:
+          requests.post(
+              url_video,
+              data={
+                  "chat_id": CHANNEL_ID,
+                  "caption": download_caption,
+                  "video": teaser_url,
+              },
+          )
+          print("✅ تیزر و لینک‌های دانلود ارسال شد.")
+        except Exception as e:
+          print(f"❌ خطا در ارسال ویدیو: {e}")
+      else:
+        print("⏳ فیلم جدیدی در سایت پیدا نشد.")
+    else:
+      print(f"❌ خطا در دسترسی به سایت. کد وضعیت: {response.status_code}")
+
+  except Exception as e:
+    print(f"خطا در شکار خودکار فیلم: {e}")
+
+  print("🏁 اجرای ربات با موفقیت به پایان رسید.")
+
+
+if __name__ == "__main__":
+  run_bot_once()
