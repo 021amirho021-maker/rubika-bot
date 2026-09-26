@@ -1,6 +1,22 @@
+import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import google.generativeai as genai
 from robobot import Bot
 
+# --- سرور ساده برای بیدار موندن Render ---
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+
+def run_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server.serve_forever()
+
+# --- بخش ربات ---
 genai.configure(api_key="API_KEY_HERE")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -17,4 +33,7 @@ async def chat_handler(bot, event):
     except Exception as e:
         await event.reply("الان نتونستم جواب بدم، بعداً پیام بده.")
 
-bot.run()
+# --- اجرای همزمان سرور و ربات ---
+if __name__ == "__main__":
+    threading.Thread(target=run_server, daemon=True).start()
+    bot.run()
